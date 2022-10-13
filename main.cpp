@@ -1,5 +1,4 @@
 #include <windows.h>
-#include <stdio.h>
 #include <tchar.h>
 #include <psapi.h>
 #include <iostream>
@@ -39,8 +38,16 @@ BOOL TerminateProcessEx(DWORD dwProcessId, UINT uExitCode)
     return result;
 }
 
-int main(void)
+int wmain(int argc, wchar_t** argv)
 {
+    //// Check args 
+    if (argc < 2)
+    {
+        std::cerr << "Lack of args...\n";
+        return -1;
+    }
+
+
     //// Get the list of process identifiers.
 
     DWORD aProcesses[1024], cbNeeded, cProcesses;
@@ -57,16 +64,24 @@ int main(void)
     cProcesses = cbNeeded / sizeof(DWORD);
 
     TCHAR szProcessName[MAX_PATH] = L"<unknown>";
-    wchar_t const* killed = L"notepad.exe";
+    //wchar_t const* killed = L"notepad.exe";
+    BOOL wasFound = FALSE;
     for (i = 0; i < cProcesses; i++)
     {
         DWORD id = aProcesses[i];
         GetNameByIdProcess(id, szProcessName);
-        if (wcscmp(killed, szProcessName) == 0)
+        if (wcscmp(argv[1], szProcessName) == 0)
         {
             std::wcout << szProcessName << "\n";
             TerminateProcessEx(id, 0);
+            wasFound = TRUE;
+            break;
         }
+    }
+
+    if (!wasFound)
+    {
+        std::cout << "Process hasn't been founded yet...??\n";
     }
 
     return 0;
