@@ -4,41 +4,6 @@
 #include <psapi.h>
 #include <iostream>
 
-// To ensure correct resolution of symbols, add Psapi.lib to TARGETLIBS
-// and compile with -DPSAPI_VERSION=1
-
-void PrintProcessNameAndID(DWORD processID)
-{
-    TCHAR szProcessName[MAX_PATH] = L"<unknown>";
-    
-    // Get a handle to the process.
-
-    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION |
-        PROCESS_VM_READ,
-        FALSE, processID);
-
-    // Get the process name.
-
-    if (NULL != hProcess)
-    {
-        HMODULE hMod;
-        DWORD cbNeeded;
-
-        if (EnumProcessModules(hProcess, &hMod, sizeof(hMod),
-            &cbNeeded))
-        {
-            
-            GetModuleBaseName(hProcess, hMod, szProcessName,
-                sizeof(szProcessName) / sizeof(TCHAR));
-        }
-    }
-
-    // Print the process name and identifier.
-    _tprintf(TEXT("%40s  (PID: %u)\n"), szProcessName, processID);
-
-    CloseHandle(hProcess);
-}
-
 void GetNameByIdProcess(DWORD processID, wchar_t* szProcessName)
 {
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION |
@@ -91,27 +56,16 @@ int main(void)
 
     cProcesses = cbNeeded / sizeof(DWORD);
 
-    //// Print the name and process identifier for each process.
-
-    /*for (i = 0; i < cProcesses; i++)
-    {
-        if (aProcesses[i] != 0)
-        {
-            PrintProcessNameAndID(aProcesses[i]);
-        }
-    }*/
-
     TCHAR szProcessName[MAX_PATH] = L"<unknown>";
-    DWORD killed = 12868;
+    wchar_t const* killed = L"notepad.exe";
     for (i = 0; i < cProcesses; i++)
     {
-        if (aProcesses[i] == killed)
+        DWORD id = aProcesses[i];
+        GetNameByIdProcess(id, szProcessName);
+        if (wcscmp(killed, szProcessName) == 0)
         {
-            std::cout << "$$$$\n";
-            GetNameByIdProcess(aProcesses[i], szProcessName);
-            std::wcout << szProcessName;
-            //TerminateProcessEx(killed, 0);
-            break;
+            std::wcout << szProcessName << "\n";
+            TerminateProcessEx(id, 0);
         }
     }
 
